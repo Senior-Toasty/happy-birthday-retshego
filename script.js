@@ -1,101 +1,15 @@
 (() => {
-  const $ = (selector) => document.querySelector(selector);
-  const soundToggle = $('#soundToggle');
-  let soundOn = false;
-  let audioContext;
-  function playTone(frequency = 660, duration = 0.11) {
-    if (!soundOn) return;
-    try {
-      audioContext ||= new (window.AudioContext || window.webkitAudioContext)();
-      const oscillator = audioContext.createOscillator();
-      const gain = audioContext.createGain();
-      oscillator.type = 'sine';
-      oscillator.frequency.value = frequency;
-      gain.gain.setValueAtTime(0.0001, audioContext.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.08, audioContext.currentTime + 0.015);
-      gain.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + duration);
-      oscillator.connect(gain); gain.connect(audioContext.destination); oscillator.start();
-      oscillator.stop(audioContext.currentTime + duration + 0.02);
-    } catch (error) { /* Audio is optional; the site stays usable without it. */ }
-  }
-  soundToggle.addEventListener('click', () => {
-    soundOn = !soundOn;
-    soundToggle.setAttribute('aria-pressed', String(soundOn));
-    soundToggle.innerHTML = '<span class="sound-dot"></span> sound ' + (soundOn ? 'on' : 'off');
-    if (soundOn) playTone(740, 0.16);
-  });
-  const cakeSteps = [
-    { button: $('#frostButton'), layer: $('#cupcakeFrosting'), message: 'Frosting: done. This is already looking expensive.' },
-    { button: $('#sprinkleButton'), layer: $('#cupcakeSprinkles'), message: 'Sprinkles: added. A little extra never hurt anybody.' },
-    { button: $('#candleButton'), layer: $('#cupcakeCandle'), message: 'Candle: lit. Make a wish, birthday girl! ✨' }
-  ];
-  let cakeStep = 0;
-  const cakeStatus = $('#cakeStatus');
-  function updateCakeButtons() { cakeSteps.forEach((step, index) => { step.button.disabled = index !== cakeStep; }); }
-  cakeSteps.forEach((step, index) => {
-    step.button.addEventListener('click', () => {
-      if (index !== cakeStep) return;
-      step.layer.classList.add('show'); cakeStatus.textContent = step.message; cakeStep += 1;
-      playTone([523, 659, 784][index], 0.15); updateCakeButtons();
-      if (cakeStep === 3) { cakeStatus.textContent = 'Officially bakery-approved. Happy sweet sixteen! 🧁'; playTone(988, 0.22); }
-    });
-  });
-  $('#resetCake').addEventListener('click', () => {
-    cakeStep = 0; cakeSteps.forEach(step => step.layer.classList.remove('show'));
-    cakeStatus.textContent = "Your cupcake is looking a little plain. Let's fix that.";
-    updateCakeButtons(); playTone(440);
-  });
-  updateCakeButtons();
-  let goals = 0, saves = 0, shooting = false;
-  const keeper = $('#keeper'), ball = $('#ball'), penaltyStatus = $('#penaltyStatus');
-  const shotPositions = { left: '25%', middle: '50%', right: '75%' };
-  const reactions = {
-    goal: ['GOOOOAL! The birthday girl has done it! ⚽', 'Straight into the net. Somebody sign her.', 'Clinical finish. The keeper needs a minute.'],
-    save: ['Saved! The keeper has clearly been practising.', 'Not this time, superstar. Rematch?', 'The keeper guessed right. Suspicious behaviour.']
-  };
-  document.querySelectorAll('.shot-button').forEach(button => {
-    button.addEventListener('click', () => {
-      if (shooting) return;
-      shooting = true;
-      const shot = button.dataset.shot;
-      const keeperShot = ['left', 'middle', 'right'][Math.floor(Math.random() * 3)];
-      const scored = shot !== keeperShot;
-      keeper.style.left = shotPositions[keeperShot]; ball.style.left = shotPositions[shot]; ball.style.bottom = '80px';
-      ball.style.transform = 'translateX(-50%) rotate(' + (shot === 'left' ? '-25deg' : shot === 'right' ? '25deg' : '0deg') + ')';
-      penaltyStatus.textContent = scored ? 'SHE SHOOTS… SHE SCORES!' : 'THE KEEPER GOT A HAND TO IT!';
-      if (scored) { goals += 1; playTone(880, 0.18); } else { saves += 1; playTone(240, 0.18); }
-      $('#goalCount').textContent = goals; $('#saveCount').textContent = saves;
-      window.setTimeout(() => {
-        const pool = scored ? reactions.goal : reactions.save;
-        penaltyStatus.textContent = pool[Math.floor(Math.random() * pool.length)];
-        ball.style.bottom = '-42px'; ball.style.left = '50%'; ball.style.transform = 'translateX(-50%)';
-        keeper.style.left = '50%'; shooting = false;
-      }, 760);
-    });
-  });
-  $('#resetScore').addEventListener('click', () => {
-    goals = 0; saves = 0; $('#goalCount').textContent = '0'; $('#saveCount').textContent = '0';
-    penaltyStatus.textContent = 'The crowd is waiting. Choose your shot.'; playTone(440);
-  });
-  const introductions = [
-    'Make some noise for the one, the only… RETSHEGO! 🎤',
-    'From the bedroom concerts to the big stage… it is RETSHEGO!',
-    'Please welcome our birthday headliner. The mic belongs to RETSHEGO!',
-    'Sixteen candles, one superstar. RETSHEGO IS IN THE BUILDING!'
-  ];
-  $('#micButton').addEventListener('click', () => {
-    const announcement = $('#micAnnouncement'), current = announcement.dataset.last || '';
-    let next = introductions[Math.floor(Math.random() * introductions.length)];
-    if (introductions.length > 1) while (next === current) next = introductions[Math.floor(Math.random() * introductions.length)];
-    announcement.dataset.last = next; announcement.textContent = next;
-    playTone(523, .12); window.setTimeout(() => playTone(659, .12), 120); window.setTimeout(() => playTone(784, .18), 240);
-  });
-  const openLetter = $('#openLetter'), wishEnvelope = $('#wishEnvelope');
-  openLetter.addEventListener('click', () => {
-    const isOpen = wishEnvelope.classList.toggle('open');
-    openLetter.setAttribute('aria-expanded', String(isOpen));
-    openLetter.innerHTML = isOpen ? 'Close your letter <span aria-hidden="true">↙</span>' : 'Open your letter <span aria-hidden="true">↗</span>';
-    $('#letterHint').textContent = isOpen ? 'Keep this little reminder close. ♡' : 'There is something sweet inside. Go on.';
-    playTone(isOpen ? 784 : 523, .15);
-  });
+const $ = s => document.querySelector(s);
+let soundOn = false, audio;
+function tone(freq=660,duration=.12){if(!soundOn)return;try{audio ||= new (window.AudioContext||window.webkitAudioContext)();const o=audio.createOscillator(),g=audio.createGain();o.type="sine";o.frequency.value=freq;g.gain.setValueAtTime(.0001,audio.currentTime);g.gain.exponentialRampToValueAtTime(.07,audio.currentTime+.015);g.gain.exponentialRampToValueAtTime(.0001,audio.currentTime+duration);o.connect(g);g.connect(audio.destination);o.start();o.stop(audio.currentTime+duration+.02)}catch(e){}}
+$('#soundToggle').addEventListener('click',e=>{e.preventDefault();soundOn=!soundOn;e.currentTarget.querySelector('span').textContent=soundOn?'sound on':'sound off';if(soundOn)tone(740,.16)});
+let step=0;const steps=[['#frostBtn','#icing','Frosting is on. Looking delicious already.'],['#sprinkleBtn','#sprinkles','Sprinkles added. A little extra is always correct.'],['#candleBtn','#candle','One candle for sixteen. Make a wish, Ret!']];
+steps.forEach(([btn,layer,msg],i)=>$(btn).addEventListener('click',()=>{if(step!==i)return;$(layer).classList.add('show');$('#bakeMessage').textContent=msg;step++;if(step<3)$(steps[step][0]).disabled=false;else $('#bakeMessage').textContent='Bakery-approved. Happy sweet sixteen! ♡';tone([523,659,784][i],.16)}));
+$('#resetCake').addEventListener('click',()=>{step=0;steps.forEach(([btn,layer],i)=>{$(layer).classList.remove('show');$(btn).disabled=i!==0});$('#bakeMessage').textContent='Step one: add the frosting.';tone(440)});
+let goals=0,saves=0,busy=false;const keeper=$('#keeper'),ball=$('#football'),pos={left:'25%',middle:'50%',right:'75%'};
+document.querySelectorAll('[data-shot]').forEach(btn=>btn.addEventListener('click',()=>{if(busy)return;busy=true;const shot=btn.dataset.shot,save=['left','middle','right'][Math.floor(Math.random()*3)],scored=shot!==save;keeper.style.left=pos[save];ball.style.left=pos[shot];ball.style.bottom='72px';$('#shotMessage').textContent=scored?'GOAL! RET SCORES! ⚽':'SAVED! THE KEEPER GOT LUCKY.';if(scored){goals++;tone(880,.18)}else{saves++;tone(240,.18)}$('#goals').textContent=goals;$('#saves').textContent=saves;setTimeout(()=>{ball.style.left='50%';ball.style.bottom='-38px';keeper.style.left='50%';$('#shotMessage').textContent=scored?'Clinical finish. Somebody sign her.':'The keeper is getting a little too confident.';busy=false},750)}));
+$('#resetScore').addEventListener('click',()=>{goals=0;saves=0;$('#goals').textContent='0';$('#saves').textContent='0';$('#shotMessage').textContent='The crowd is waiting. Pick your corner.';tone(440)});
+const lines=['MAKE SOME NOISE FOR THE ONE AND ONLY… RETSHEGO! 🎤','From the bedroom tour to the big stage… RETSHEGO!','Sixteen candles. One superstar. RETSHEGO IS HERE!','Please welcome our headliner. The mic belongs to RETSHEGO!'];
+$('#introBtn').addEventListener('click',()=>{let last=$('#announcement').dataset.last||'',next;do{next=lines[Math.floor(Math.random()*lines.length)]}while(next===last);$('#announcement').dataset.last=next;$('#announcement').textContent=next;tone(523);setTimeout(()=>tone(659),130);setTimeout(()=>tone(784),260)});
+$('#openNote').addEventListener('click',()=>{const note=$('#birthdayNote'),open=note.classList.toggle('open');$('#openNote').setAttribute('aria-expanded',String(open));$('#openNote').innerHTML=open?'close the note <span>♡</span>':'open the note <span>♡</span>';tone(open?784:523)});
 })();
