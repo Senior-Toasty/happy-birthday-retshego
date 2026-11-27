@@ -2,7 +2,7 @@
 const $ = s => document.querySelector(s);
 let soundOn=false,audio;
 function tone(freq=660,duration=.12){if(!soundOn)return;try{audio ||= new (window.AudioContext||window.webkitAudioContext)();const o=audio.createOscillator(),g=audio.createGain();o.type="sine";o.frequency.value=freq;g.gain.setValueAtTime(.0001,audio.currentTime);g.gain.exponentialRampToValueAtTime(.06,audio.currentTime+.015);g.gain.exponentialRampToValueAtTime(.0001,audio.currentTime+duration);o.connect(g);g.connect(audio.destination);o.start();o.stop(audio.currentTime+duration+.02)}catch(e){}}
-$('#soundToggle').addEventListener('click',e=>{soundOn=!soundOn;e.currentTarget.querySelector('span').textContent=soundOn?'sound on':'sound off';if(soundOn)tone(740,.16)});
+
 document.querySelectorAll('.drawer-trigger').forEach(button=>button.addEventListener('click',()=>{const drawer=button.closest('.drawer'),panel=document.getElementById(button.getAttribute('aria-controls')),open=button.getAttribute('aria-expanded')!=='true';button.setAttribute('aria-expanded',String(open));panel.hidden=!open;drawer.classList.toggle('open',open);tone(open?740:440)}));
 document.querySelectorAll('[data-action]').forEach(button=>button.addEventListener('click',()=>{const target=button.dataset.action==='bake'?'#bakery':'#shootout';document.querySelector(target).scrollIntoView({behavior:'smooth',block:'center'});document.querySelector(target).classList.add('game-focus');setTimeout(()=>document.querySelector(target).classList.remove('game-focus'),1300)}));
 let step=0;const steps=[['#frostBtn','#icing','Frosting is on. Looking delicious already.'],['#sprinkleBtn','#sprinkles','Sprinkles added. A little extra is always correct.'],['#candleBtn','#candle','One candle for sixteen. Make a wish, Ret!']];
